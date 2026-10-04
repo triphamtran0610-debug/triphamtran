@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V10 - Hệ thống trắc nghiệm Lý luận chính trị</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Segoe UI,sans-serif;background:#f3f6fa;color:#182338}
+.wrap{max-width:1120px;margin:auto;padding:18px}.card{background:#fff;border-radius:16px;padding:20px;margin:15px 0;box-shadow:0 8px 30px #143b610f}
+h1,h2,h3{margin-top:0}.muted{color:#667085}.hidden{display:none!important}
+input,textarea,select{width:100%;padding:11px 12px;border:1px solid #ccd5e0;border-radius:10px;font:inherit;margin:5px 0 10px}
+button{border:0;border-radius:10px;padding:10px 14px;background:#0b4ea2;color:#fff;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}
+.secondary{background:#e9eef5;color:#1c2a3d}.danger{background:#b42318}.success{background:#18794e}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{padding:14px;background:#f7f9fc;border-radius:12px}.stat b{display:block;font-size:23px;margin-top:5px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.q{border:1px solid #e1e7ee;border-radius:14px;padding:14px;margin:12px 0}.option{display:block;padding:10px;border:1px solid #e1e7ee;border-radius:10px;margin:7px 0}
+.timer{font-size:23px;font-weight:800;background:#fff1c4;padding:10px 14px;border-radius:10px}.timer.warn{background:#ffe2de;color:#a22419}
+.review{padding:12px;border-radius:12px;border:1px solid;margin:9px 0}.correct{background:#effaf2;border-color:#91d6a0}.wrong{background:#fff0ed;border-color:#efaba2}
+table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #e6ebf1;text-align:left;font-size:14px}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2f7;margin-right:5px}.draft{background:#fff1c4}.approved{background:#daf5e4}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;z-index:99}.modal-box{width:min(460px,95vw);background:#fff;border-radius:16px;padding:22px}
+.notice{padding:12px;border-radius:10px;background:#eef7ff;margin:8px 0}
+@media(max-width:760px){.grid,.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="card top">
+<div><h1>📚 Trắc nghiệm Lý luận chính trị</h1><div id="examInfo" class="muted">Đang tải...</div></div>
+<button class="secondary" id="adminBtn">🔐 Quản trị</button>
+</header>
+
+<section id="loginStudent" class="card">
+<h2>👨‍🎓 Đăng nhập học viên</h2>
+<div class="notice">Học viên phải dùng <b>tài khoản cá nhân</b>. Không có chức năng chọn tên người khác.</div>
+<input id="stuUser" placeholder="Mã học viên / tài khoản">
+<input id="stuPass" type="password" placeholder="Mật khẩu">
+<div id="stuMsg" class="muted"></div>
+<button id="stuLoginBtn">🔑 Đăng nhập và vào thi</button>
+</section>
+
+<section id="quiz" class="card hidden">
+<div class="top"><div><h2 id="quizTitle"></h2><div id="quizMeta" class="muted"></div></div><div id="timer" class="timer">25:00</div></div>
+<div id="identity" class="notice"></div>
+<div id="quizQuestions"></div>
+<button id="submitBtn">Nộp bài</button>
+</section>
+
+<section id="result" class="card hidden"></section>
+
+<section id="admin" class="hidden">
+<div class="card top"><div><h2>🔐 Quản trị</h2><div class="muted">Quản lý tập trung trên trình duyệt này</div></div><button id="adminLogout" class="secondary">Đăng xuất</button></div>
+<div class="tabs" id="tabs">
+<button data-tab="dash">Tổng quan</button>
+<button data-tab="exam">Kỳ thi</button>
+<button data-tab="sources">Bộ luật/Tài liệu</button>
+<button data-tab="questions">Ngân hàng câu hỏi</button>
+<button data-tab="students">Học viên</button>
+<button data-tab="backup">Sao lưu</button>
+</div>
+
+<div id="panel-dash" class="card panel">
+<h3>📊 Tổng quan</h3>
+<div class="stats">
+<div class="stat">Tổng học viên<b id="sTotal">0</b></div>
+<div class="stat">Đã làm<b id="sDone">0</b></div>
+<div class="stat">Chưa làm/vắng<b id="sAbsent">0</b></div>
+<div class="stat">Hoàn thành<b id="sRate">0%</b></div>
+<div class="stat">Đạt<b id="sPassed">0</b></div>
+<div class="stat">Điểm TB<b id="sAvg">0%</b></div>
+</div>
+<div id="resultsTable" style="margin-top:14px"></div>
+</div>
+
+<div id="panel-exam" class="card panel hidden">
+<h3>🎯 Cấu hình kỳ thi</h3>
+<div class="grid">
+<div><label>Tên kỳ thi</label><input id="examName"></div>
+<div><label>Bộ luật/tài liệu</label><select id="activeSource"></select></div>
+<div><label>Số câu mỗi bài (1–30)</label><input id="examCount" type="number" min="1" max="30"></div>
+<div><label>Thời gian (phút)</label><input id="examMinutes" type="number" min="1" max="180"></div>
+<div><label>Tỷ lệ đạt (%)</label><input id="examPass" type="number" min="0" max="100"></div>
+</div>
+<button id="saveExam">Lưu cấu hình</button>
+</div>
+
+<div id="panel-sources" class="card panel hidden">
+<h3>📚 Bộ luật / nguồn thông tin</h3>
+<input id="srcName" placeholder="Tên bộ luật/tài liệu">
+<input id="srcCode" placeholder="Số hiệu văn bản">
+<textarea id="srcText" rows="8" placeholder="Dán nội dung nguồn tại đây"></textarea>
+<button id="addSource">➕ Thêm nguồn</button>
+<div id="sourceList"></div>
+</div>
+
+<div id="panel-questions" class="card panel hidden">
+<h3>📝 Ngân hàng câu hỏi</h3>
+<div class="grid">
+<select id="qSource"></select><input id="qTopic" placeholder="Chuyên đề">
+<select id="qDifficulty"><option>Nhận biết</option><option selected>Thông hiểu</option><option>Vận dụng</option><option>Vận dụng cao</option></select>
+<select id="qStatus"><option value="draft">Nháp</option><option value="approved">Đã duyệt</option><option value="archived">Lưu trữ</option></select>
+<input id="qBasis" placeholder="Điều/Khoản">
+<input id="qPage" placeholder="Trang nguồn">
+</div>
+<input type="hidden" id="qId">
+<textarea id="qText" rows="3" placeholder="Câu hỏi"></textarea>
+<div class="grid">
+<input id="qa" placeholder="Đáp án A"><input id="qb" placeholder="Đáp án B"><input id="qc" placeholder="Đáp án C"><input id="qd" placeholder="Đáp án D">
+</div>
+<select id="qCorrect"><option value="0">A đúng</option><option value="1">B đúng</option><option value="2">C đúng</option><option value="3">D đúng</option></select>
+<textarea id="qExplanation" rows="3" placeholder="Giải thích đáp án"></textarea>
+<button id="saveQ">Lưu câu hỏi</button><button id="clearQ" class="secondary">Làm mới</button>
+<div id="questionList"></div>
+</div>
+
+<div id="panel-students" class="card panel hidden">
+<h3>👥 Học viên</h3>
+<p class="muted">Mỗi dòng: Tài khoản | Mật khẩu | Họ tên | Đơn vị | Mã học viên | Lớp. Dữ liệu nằm trên trình duyệt này.</p>
+<textarea id="studentCsv" rows="14"></textarea>
+<button id="saveStudents">💾 Lưu danh sách</button>
+<div id="studentList"></div>
+</div>
+
+<div id="panel-backup" class="card panel hidden">
+<h3>💾 Sao lưu / khôi phục</h3>
+<p class="muted">Sao lưu toàn bộ dữ liệu để chuyển máy hoặc khôi phục.</p>
+<button id="exportData">⬇️ Xuất dữ liệu JSON</button>
+<input id="importData" type="file" accept=".json">
+<button id="clearAll" class="danger">Xóa toàn bộ dữ liệu</button>
+</div>
+</section>
+</div>
+
+<div id="adminModal" class="modal hidden">
+<div class="modal-box">
+<h2>🔐 Đăng nhập quản trị</h2>
+<input id="adminUser" placeholder="Tài khoản">
+<input id="adminPass" type="password" placeholder="Mật khẩu">
+<div id="adminMsg" class="muted"></div>
+<button id="adminLogin">Đăng nhập</button>
+<button id="adminClose" class="secondary">Đóng</button>
+</div>
+</div>
+
+<script>
+const INITIAL_QUESTIONS = [{"id": "q1", "question": "Theo Điều 1 Luật số 72/2025/QH15, đơn vị hành chính của Việt Nam được tổ chức thành bao nhiêu cấp?", "options": ["02 cấp", "03 cấp", "04 cấp", "05 cấp"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q2", "question": "Theo Điều 1, cấp tỉnh gồm những đơn vị nào?", "options": ["Tỉnh và thành phố trực thuộc Trung ương", "Tỉnh và huyện", "Xã và phường", "Huyện và quận"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q3", "question": "Theo Điều 1, cấp xã gồm những đơn vị nào?", "options": ["Xã, phường, đặc khu trực thuộc cấp tỉnh", "Huyện, quận, thị xã", "Tỉnh và thành phố trực thuộc Trung ương", "Chỉ xã và phường"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q4", "question": "Theo Điều 1, xã là đơn vị hành chính ở khu vực nào?", "options": ["Nông thôn", "Đô thị", "Hải đảo", "Đặc khu"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q5", "question": "Theo Điều 1, phường là đơn vị hành chính ở khu vực nào?", "options": ["Đô thị", "Nông thôn", "Chỉ hải đảo", "Chỉ khu kinh tế"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q6", "question": "Theo Điều 1, đặc khu là đơn vị hành chính ở đâu?", "options": ["Một số hải đảo có vị trí quan trọng", "Tất cả khu vực nông thôn", "Tất cả quận nội thành", "Chỉ các tỉnh miền núi"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q7", "question": "Theo Điều 1, đơn vị hành chính - kinh tế đặc biệt do cơ quan nào quyết định thành lập?", "options": ["Quốc hội", "Chính phủ", "HĐND cấp tỉnh", "UBND cấp tỉnh"], "correct": 0, "basis": "Điều 1", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q8", "question": "Theo Điều 2, chính quyền địa phương (trừ trường hợp Điều 28) gồm những cơ quan nào?", "options": ["Hội đồng nhân dân và Ủy ban nhân dân", "Ủy ban nhân dân và Tòa án nhân dân", "Hội đồng nhân dân và Viện kiểm sát nhân dân", "Ủy ban nhân dân và Mặt trận Tổ quốc Việt Nam"], "correct": 0, "basis": "Điều 2", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q9", "question": "Theo Điều 3, việc phân loại đơn vị hành chính là cơ sở để làm gì?", "options": ["Hoạch định chính sách phát triển kinh tế - xã hội, xây dựng tổ chức bộ máy và chế độ, chính sách phù hợp", "Chỉ xác định mức thuế", "Chỉ xác định địa giới hành chính", "Chỉ xác định số lượng đại biểu Quốc hội"], "correct": 0, "basis": "Điều 3", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q10", "question": "Theo Điều 3, phân loại đơn vị hành chính phải dựa trên tiêu chí nào sau đây?", "options": ["Quy mô dân số, diện tích tự nhiên, điều kiện phát triển kinh tế - xã hội và yếu tố đặc thù", "Chỉ quy mô dân số", "Chỉ diện tích tự nhiên", "Chỉ số lượng cán bộ"], "correct": 0, "basis": "Điều 3", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q11", "question": "Theo Điều 4, Hội đồng nhân dân hoạt động theo chế độ nào?", "options": ["Tập thể, quyết định theo đa số", "Cá nhân, quyết định theo đa số", "Tập thể, quyết định theo thiểu số", "Cá nhân, quyết định theo đồng thuận"], "correct": 0, "basis": "Điều 4", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q12", "question": "Theo Điều 4, Ủy ban nhân dân hoạt động theo nguyên tắc nào?", "options": ["Tập thể, quyết định theo đa số; đồng thời đề cao thẩm quyền và trách nhiệm của Chủ tịch UBND", "Cá nhân, quyết định theo đa số", "Tập thể nhưng chỉ quyết định theo đồng thuận", "Cá nhân và không chịu trách nhiệm"], "correct": 0, "basis": "Điều 4", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q13", "question": "Theo Điều 4, tổ chức chính quyền địa phương phải hướng tới yêu cầu nào?", "options": ["Tinh gọn, hiệu năng, hiệu lực, hiệu quả", "Tăng tầng nấc trung gian", "Giảm trách nhiệm giải trình", "Hạn chế chuyển đổi số"], "correct": 0, "basis": "Điều 4", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q14", "question": "Theo Điều 4, chính quyền địa phương phải bảo đảm nền hành chính như thế nào?", "options": ["Minh bạch, thống nhất, thông suốt, liên tục", "Khép kín và không công khai", "Chỉ thống nhất ở cấp tỉnh", "Không cần trách nhiệm giải trình"], "correct": 0, "basis": "Điều 4", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q15", "question": "Theo Điều 9, Quốc hội quyết định việc thành lập, giải thể, nhập, chia và đổi tên đơn vị hành chính cấp nào?", "options": ["Cấp tỉnh", "Cấp xã", "Thôn", "Tổ dân phố"], "correct": 0, "basis": "Điều 9", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q16", "question": "Theo Điều 9, Ủy ban Thường vụ Quốc hội quyết định việc thành lập, giải thể, nhập, chia và đổi tên đơn vị hành chính cấp nào?", "options": ["Cấp xã", "Cấp tỉnh", "Thôn", "Tổ dân phố"], "correct": 0, "basis": "Điều 9", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q17", "question": "Theo Điều 11, nhiệm vụ, quyền hạn của chính quyền địa phương các cấp được xác định trên cơ sở nào?", "options": ["Phân định thẩm quyền giữa cơ quan nhà nước ở trung ương và địa phương và giữa các cấp chính quyền địa phương bằng phân quyền, phân cấp", "Chỉ theo quyết định của Chủ tịch UBND", "Chỉ theo nghị quyết HĐND cấp xã", "Chỉ theo quy chế nội bộ"], "correct": 0, "basis": "Điều 11", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q18", "question": "Theo Điều 11, phân định thẩm quyền phải xác định rõ điều gì?", "options": ["Nội dung và phạm vi nhiệm vụ, quyền hạn mà chính quyền địa phương được quyết định, tổ chức thực hiện và chịu trách nhiệm về kết quả", "Chỉ số lượng cán bộ", "Chỉ nguồn thu ngân sách", "Chỉ địa giới hành chính"], "correct": 0, "basis": "Điều 11", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q19", "question": "Theo Điều 11, phân định thẩm quyền phải bảo đảm điều gì giữa các cơ quan?", "options": ["Không trùng lặp, chồng chéo về nhiệm vụ, quyền hạn", "Tăng trùng lặp để kiểm soát", "Chỉ phân biệt ở cấp tỉnh", "Không cần phân biệt UBND và Chủ tịch UBND"], "correct": 0, "basis": "Điều 11", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q20", "question": "Theo Điều 12, việc phân quyền cho chính quyền địa phương các cấp phải được quy định ở đâu?", "options": ["Trong luật, nghị quyết của Quốc hội", "Chỉ trong quyết định của UBND", "Chỉ trong quy chế làm việc", "Chỉ trong văn bản của HĐND cấp xã"], "correct": 0, "basis": "Điều 12", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q21", "question": "Theo Điều 12, chính quyền địa phương tự chủ trong phạm vi nhiệm vụ, quyền hạn được phân quyền về những việc nào?", "options": ["Ra quyết định, tổ chức thi hành và tự chịu trách nhiệm", "Chỉ ra quyết định", "Chỉ báo cáo cấp trên", "Chỉ tổ chức hội nghị"], "correct": 0, "basis": "Điều 12", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q22", "question": "Theo Điều 12, chính quyền địa phương có thể phân cấp, ủy quyền nhiệm vụ, quyền hạn được phân quyền không?", "options": ["Có, trừ trường hợp luật hoặc nghị quyết của Quốc hội quy định không được phân cấp, ủy quyền", "Không bao giờ", "Chỉ khi có quyết định của Quốc hội cho từng trường hợp", "Chỉ ở cấp tỉnh"], "correct": 0, "basis": "Điều 12", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q23", "question": "Theo Điều 17, ai lãnh đạo và điều hành công việc của UBND tỉnh, triệu tập và chủ tọa các phiên họp của UBND?", "options": ["Chủ tịch UBND tỉnh", "Chủ tịch HĐND tỉnh", "Bí thư Tỉnh ủy", "Giám đốc Sở Nội vụ"], "correct": 0, "basis": "Điều 17", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q24", "question": "Theo Điều 17, Chủ tịch UBND tỉnh chịu trách nhiệm về việc thực hiện hiệu quả nội dung nào sau đây?", "options": ["Ứng dụng công nghệ thông tin, chuyển đổi số trong hoạt động của chính quyền địa phương cấp mình và cấp xã trong giải quyết thủ tục hành chính, cung ứng dịch vụ công", "Chỉ quản lý hộ tịch", "Chỉ quản lý trường học", "Chỉ quản lý giao thông"], "correct": 0, "basis": "Điều 17", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q25", "question": "Theo Điều 23, Chủ tịch UBND xã có nhiệm vụ nào sau đây?", "options": ["Lãnh đạo, điều hành công việc của UBND; triệu tập và chủ tọa các phiên họp của UBND", "Chỉ chủ tọa HĐND", "Chỉ quản lý ngân sách trung ương", "Chỉ quyết định việc thành lập tỉnh"], "correct": 0, "basis": "Điều 23", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q26", "question": "Theo Điều 23, Chủ tịch UBND xã có trách nhiệm về chuyển đổi số như thế nào?", "options": ["Thực hiện hiệu quả ứng dụng công nghệ thông tin, chuyển đổi số trong hoạt động của chính quyền cấp mình, giải quyết thủ tục hành chính và cung ứng dịch vụ công", "Không có trách nhiệm", "Chỉ báo cáo cấp tỉnh", "Chỉ thực hiện khi có yêu cầu của Quốc hội"], "correct": 0, "basis": "Điều 23", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q27", "question": "Theo Điều 25, UBND phường có thực hiện thu phí, lệ phí trên địa bàn không?", "options": ["Có, theo quy định của pháp luật và phân cấp của chính quyền địa phương cấp tỉnh", "Không", "Chỉ thu phí, không thu lệ phí", "Chỉ khi HĐND Trung ương cho phép"], "correct": 0, "basis": "Điều 25", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q28", "question": "Theo Điều 25, UBND phường thực hiện liên kết, hợp tác với chính quyền địa phương ở đâu về kinh tế, hạ tầng đô thị, giao thông và môi trường?", "options": ["Các phường lân cận", "Chỉ các tỉnh khác", "Chỉ các huyện lân cận", "Chỉ các cơ quan trung ương"], "correct": 0, "basis": "Điều 25", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q29", "question": "Theo Điều 28, đặc khu có dân số thường trú dưới 1.000 người thì tổ chức chính quyền địa phương như thế nào?", "options": ["Không tổ chức cấp chính quyền địa phương; UBND đặc khu là cơ quan hành chính nhà nước thực hiện vai trò của chính quyền địa phương", "Tổ chức đầy đủ HĐND và UBND", "Chỉ tổ chức HĐND", "Sáp nhập ngay vào tỉnh khác"], "correct": 0, "basis": "Điều 28", "topic": "Luật Tổ chức chính quyền địa phương"}, {"id": "q30", "question": "Theo Điều 54, chậm nhất đến ngày nào các văn bản quy phạm pháp luật liên quan phải được sửa đổi, bổ sung để phù hợp với Luật?", "options": ["01 tháng 3 năm 2027", "01 tháng 7 năm 2025", "31 tháng 12 năm 2025", "01 tháng 1 năm 2026"], "correct": 0, "basis": "Điều 54", "topic": "Luật Tổ chức chính quyền địa phương"}];
+const ADMIN_USER="tuyen", ADMIN_PASS="0610";
+const KEY="LLCT_V10_DATA";
+let state = JSON.parse(localStorage.getItem(KEY)||"null") || {
+  config:{examName:"Trắc nghiệm Luật Tổ chức chính quyền địa phương",activeSourceId:"law-72-2025",questionCount:30,durationMinutes:25,passPercent:50},
+  sources:[{id:"law-72-2025",name:"Luật Tổ chức chính quyền địa phương 2025",code:"72/2025/QH15",text:"Nguồn khởi tạo từ tài liệu Luật số 72/2025/QH15."}],
+  questions:INITIAL_QUESTIONS.map(q=>({...q,status:"approved"})),
+  students:[
+    {username:"GV001",password:"123456",name:"Giảng viên mẫu",unit:"",code:"GV001",className:"Mẫu"}
+  ],
+  results:{},
+  activeStudent:null
+};
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state))}
+function $(id){return document.getElementById(id)}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function refreshExamInfo(){$("examInfo").textContent=`${state.config.examName} • ${state.config.questionCount} câu • ${state.config.durationMinutes} phút`}
+function openModal(){$("adminModal").classList.remove("hidden")}
+function closeModal(){$("adminModal").classList.add("hidden");$("adminMsg").textContent=""}
+function loginAdmin(){if($("adminUser").value===ADMIN_USER&&$("adminPass").value===ADMIN_PASS){closeModal();$("loginStudent").classList.add("hidden");$("admin").classList.remove("hidden");renderAdmin()}else $("adminMsg").textContent="Sai tài khoản hoặc mật khẩu."}
+function showPanel(name){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("hidden",p.id!=="panel-"+name))
+}
+function renderSources(){
+  $("activeSource").innerHTML=state.sources.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}${s.code?" — "+esc(s.code):""}</option>`).join("");
+  $("qSource").innerHTML=$("activeSource").innerHTML;
+  $("activeSource").value=state.config.activeSourceId;$("qSource").value=state.config.activeSourceId;
+  $("sourceList").innerHTML=state.sources.map(s=>`<div class="card"><b>${esc(s.name)}</b><div class="muted">${esc(s.code)}</div><button class="danger" onclick="deleteSource('${s.id}')">Xóa</button></div>`).join("")
+}
+function renderQuestions(){
+  const sid=$("qSource").value||state.config.activeSourceId;
+  const list=state.questions.filter(q=>q.sourceId===sid);
+  $("questionList").innerHTML=list.map((q,i)=>`<div class="card">
+<b>Câu ${i+1}. ${esc(q.question)}</b>
+<div>A. ${esc(q.options[0])}<br>B. ${esc(q.options[1])}<br>C. ${esc(q.options[2])}<br>D. ${esc(q.options[3])}</div>
+<small>${esc(q.topic||"")} • ${esc(q.difficulty||"")} • <span class="badge ${q.status}">${esc(q.status)}</span> • Đúng: ${String.fromCharCode(65+q.correct)}</small>
+<div style="margin-top:7px"><button onclick='editQuestion(${JSON.stringify(q)})' class="secondary">Sửa</button>
+<button onclick="setStatus('${q.id}','approved')">Duyệt</button><button onclick="setStatus('${q.id}','draft')" class="secondary">Nháp</button><button onclick="deleteQuestion('${q.id}')" class="danger">Xóa</button></div></div>`).join("")||"Chưa có câu hỏi"
+}
+function clearQ(){["qId","qText","qTopic","qBasis","qPage","qa","qb","qc","qd","qExplanation"].forEach(x=>$(x).value="");$("qCorrect").value="0";$("qStatus").value="draft"}
+function editQuestion(q){$("qId").value=q.id;$("qSource").value=q.sourceId;$("qTopic").value=q.topic||"";$("qDifficulty").value=q.difficulty||"Thông hiểu";$("qStatus").value=q.status||"draft";$("qBasis").value=q.basis||"";$("qPage").value=q.sourcePage||"";$("qText").value=q.question;$("qa").value=q.options[0];$("qb").value=q.options[1];$("qc").value=q.options[2];$("qd").value=q.options[3];$("qCorrect").value=q.correct;$("qExplanation").value=q.explanation||"";window.scrollTo({top:0,behavior:"smooth"})}
+function saveQuestion(){
+  const item={id:$("qId").value||("q-"+Date.now()),sourceId:$("qSource").value,topic:$("qTopic").value,difficulty:$("qDifficulty").value,status:$("qStatus").value,basis:$("qBasis").value,sourcePage:$("qPage").value,question:$("qText").value.trim(),options:[$("qa").value.trim(),$("qb").value.trim(),$("qc").value.trim(),$("qd").value.trim()],correct:Number($("qCorrect").value),explanation:$("qExplanation").value.trim()};
+  if(!item.question||item.options.some(x=>!x)){alert("Nhập đủ câu hỏi và 4 đáp án.");return}
+  const ix=state.questions.findIndex(x=>x.id===item.id);if(ix>=0)state.questions[ix]=item;else state.questions.push(item);saveState();clearQ();renderQuestions()
+}
+function setStatus(id,status){const q=state.questions.find(x=>x.id===id);if(q){q.status=status;saveState();renderQuestions()}}
+function deleteQuestion(id){if(confirm("Xóa câu hỏi?")){state.questions=state.questions.filter(q=>q.id!==id);saveState();renderQuestions()}}
+function deleteSource(id){if(state.questions.some(q=>q.sourceId===id)){alert("Nguồn đang có câu hỏi.");return}if(confirm("Xóa nguồn?")){state.sources=state.sources.filter(s=>s.id!==id);if(state.config.activeSourceId===id)state.config.activeSourceId=state.sources[0]?.id||"";saveState();renderSources()}}
+function saveExam(){state.config={examName:$("examName").value.trim()||"Bài trắc nghiệm",activeSourceId:$("activeSource").value,questionCount:Math.max(1,Math.min(30,Number($("examCount").value)||30)),durationMinutes:Math.max(1,Math.min(180,Number($("examMinutes").value)||25)),passPercent:Math.max(0,Math.min(100,Number($("examPass").value)||50))};saveState();refreshExamInfo();alert("Đã lưu cấu hình")}
+function addSource(){const name=$("srcName").value.trim();if(!name)return alert("Nhập tên nguồn");const s={id:"src-"+Date.now(),name,code:$("srcCode").value.trim(),text:$("srcText").value.trim()};state.sources.push(s);state.config.activeSourceId=s.id;saveState();renderSources();$("srcName").value="";$("srcCode").value="";$("srcText").value=""}
+function renderStudents(){$("studentCsv").value=state.students.map(x=>[x.username,x.password,x.name,x.unit,x.code,x.className].join(" | ")).join("\\n");$("studentList").innerHTML=state.students.map(x=>`<div class="card"><b>${esc(x.name)}</b> • Tài khoản: <b>${esc(x.username)}</b> • Mã: ${esc(x.code||"")}</div>`).join("")}
+function saveStudents(){
+  const lines=$("studentCsv").value.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean),seen=new Set(),arr=[];
+  for(const line of lines){const [username,password,name,unit,code,className]=line.split("|").map(x=>String(x||"").trim());if(!username||!password||!name)continue;if(seen.has(username))return alert("Trùng tài khoản: "+username);seen.add(username);arr.push({username,password,name,unit,code,className})}
+  state.students=arr;saveState();renderStudents();alert("Đã lưu "+arr.length+" học viên")
+}
+function renderDash(){
+  const total=state.students.length, done=Object.keys(state.results).length, absent=Math.max(0,total-done), vals=Object.values(state.results);
+  const avg=vals.length?vals.reduce((a,x)=>a+(x.score/x.total*100),0)/vals.length:0, passed=vals.filter(x=>x.score/x.total*100>=state.config.passPercent).length;
+  $("sTotal").textContent=total;$("sDone").textContent=done;$("sAbsent").textContent=absent;$("sRate").textContent=(total?done/total*100:0).toFixed(0)+"%";$("sPassed").textContent=passed;$("sAvg").textContent=avg.toFixed(1)+"%";
+  $("resultsTable").innerHTML=vals.length?`<table><tr><th>Học viên</th><th>Điểm</th><th>Kết quả</th><th>Thời gian</th></tr>${vals.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}/${x.total}</td><td>${x.score/x.total*100>=state.config.passPercent?"Đạt":"Chưa đạt"}</td><td>${esc(x.submittedAt)}</td></tr>`).join("")}</table>`:"Chưa có kết quả"
+}
+function renderAdmin(){
+  $("examName").value=state.config.examName;$("examCount").value=state.config.questionCount;$("examMinutes").value=state.config.durationMinutes;$("examPass").value=state.config.passPercent;
+  renderSources();renderQuestions();renderStudents();renderDash()
+}
+let examTimer=null,examDeadline=0,currentQuiz=null;
+function studentLogin(){
+  const u=$("stuUser").value.trim(),p=$("stuPass").value;
+  const st=state.students.find(x=>x.username===u&&x.password===p);
+  if(!st){$("stuMsg").textContent="Sai tài khoản hoặc mật khẩu.";return}
+  if(state.results[st.username]){$("stuMsg").textContent="Tài khoản này đã hoàn thành bài.";return}
+  state.activeStudent=st.username;saveState();startQuiz(st)
+}
+function startQuiz(st){
+  const pool=state.questions.filter(q=>q.sourceId===state.config.activeSourceId&&q.status==="approved");
+  const n=Math.min(state.config.questionCount,pool.length);
+  if(pool.length<n||!n){alert("Bộ luật hiện tại chưa đủ câu đã duyệt.");return}
+  currentQuiz=shuffle(pool).slice(0,n).map(q=>{const o=shuffle(q.options.map((text,index)=>({text,index})));return{id:q.id,question:q.question,options:o.map(x=>x.text),correct:o.findIndex(x=>x.index===q.correct),basis:q.basis,explanation:q.explanation}});
+  $("loginStudent").classList.add("hidden");$("quiz").classList.remove("hidden");$("quizTitle").textContent=state.config.examName;$("quizMeta").textContent=`${currentQuiz.length} câu • ${st.name}`;$("identity").innerHTML=`🔒 <b>${esc(st.name)}</b> • Tài khoản <b>${esc(st.username)}</b> • Một lượt thi duy nhất`;
+  $("quizQuestions").innerHTML=currentQuiz.map((q,i)=>`<div class="q"><b>Câu ${i+1}. ${esc(q.question)}</b>${q.options.map((o,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${esc(o)}</label>`).join("")}</div>`).join("");
+  examDeadline=Date.now()+state.config.durationMinutes*60000;tick();clearInterval(examTimer);examTimer=setInterval(tick,1000)
+}
+function tick(){const sec=Math.max(0,Math.ceil((examDeadline-Date.now())/1000));$("timer").textContent=`${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;$("timer").classList.toggle("warn",sec<=60);if(sec<=0){clearInterval(examTimer);submitQuiz(true)}}
+function submitQuiz(auto){
+  const st=state.students.find(x=>x.username===state.activeStudent);if(!st||!currentQuiz)return;
+  const answers=currentQuiz.map((_,i)=>{const el=document.querySelector(`input[name="q${i}"]:checked`);return el?Number(el.value):null});
+  const score=currentQuiz.reduce((n,q,i)=>n+(answers[i]===q.correct?1:0),0);
+  state.results[st.username]={
+    name:st.name,username:st.username,score,total:currentQuiz.length,
+    submittedAt:new Date().toLocaleString("vi-VN"),autoSubmitted:auto,
+    detail:currentQuiz.map((q,i)=>({
+      q:q.question,options:q.options,chosen:answers[i],correct:q.correct,
+      correctAnswer:q.options[q.correct],basis:q.basis,explanation:q.explanation
+    }))
+  };
+  state.activeStudent=null;saveState();clearInterval(examTimer);
+  $("quiz").classList.add("hidden");$("result").classList.remove("hidden");
+  const r=state.results[st.username],passed=r.score/r.total*100>=state.config.passPercent;
+  let html=`<h2>${auto?"⏰ Hết giờ — bài đã tự động nộp":"✅ Đã nộp bài"}</h2>
+    <div class="notice">Điểm: <b>${r.score}/${r.total}</b> • ${passed?"ĐẠT":"CHƯA ĐẠT"}</div>`;
+  html+=r.detail.map((x,i)=>{
+    const ok=x.chosen===x.correct;
+    const chosen=x.chosen===null?"Chưa trả lời":String.fromCharCode(65+x.chosen)+". "+esc(x.options[x.chosen]);
+    const correct=String.fromCharCode(65+x.correct)+". "+esc(x.correctAnswer);
+    return `<div class="review ${ok?"correct":"wrong"}">
+      <b>${ok?"✅ Đúng":"❌ Sai"} — Câu ${i+1}</b>
+      <div>Bạn chọn: <b>${chosen}</b></div>
+      <div>Đáp án đúng: <b>${correct}</b></div>
+      ${x.basis?`<div>Căn cứ: ${esc(x.basis)}</div>`:""}
+      ${x.explanation?`<div class="notice">💡 ${esc(x.explanation)}</div>`:""}
+    </div>`;
+  }).join("");
+  $("result").innerHTML=html+`<button class="secondary" onclick="location.reload()">Kết thúc</button>`;
+}
+function exportData(){const b=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="du-lieu-ly-luan-chinh-tri-v10.json";a.click()}
+function importData(file){const r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);saveState();location.reload()}catch(e){alert("File không hợp lệ")}};r.readAsText(file)}
+function clearAll(){if(confirm("Xóa toàn bộ dữ liệu trên máy này?")){localStorage.removeItem(KEY);location.reload()}}
+refreshExamInfo();
+$("adminBtn").onclick=openModal;$("adminClose").onclick=closeModal;$("adminLogin").onclick=loginAdmin;
+$("stuLoginBtn").onclick=studentLogin;$("submitBtn").onclick=()=>submitQuiz(false);$("adminLogout").onclick=()=>location.reload();
+$("saveExam").onclick=saveExam;$("addSource").onclick=addSource;$("saveQ").onclick=saveQuestion;$("clearQ").onclick=clearQ;$("saveStudents").onclick=saveStudents;$("exportData").onclick=exportData;$("clearAll").onclick=clearAll;$("importData").onchange=e=>e.target.files[0]&&importData(e.target.files[0]);
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showPanel(b.dataset.tab));
+$("activeSource").onchange=renderQuestions;$("qSource").onchange=renderQuestions;
+
+// QR exam-only mode: when URL contains ?thi=1, hide admin access and focus on student login.
+function applyExamOnlyMode(){
+  const examOnly = new URLSearchParams(location.search).get("thi") === "1";
+  if(!examOnly) return;
+  const adminBtn = document.getElementById("adminBtn");
+  if(adminBtn) adminBtn.style.display = "none";
+  const login = document.getElementById("loginStudent");
+  if(login) login.scrollIntoView({behavior:"instant", block:"start"});
+  const user = document.getElementById("stuUser");
+  if(user) setTimeout(()=>user.focus(),150);
+}
+
+applyExamOnlyMode();
+</script>
+</body></html>
