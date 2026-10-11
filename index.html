@@ -298,7 +298,7 @@ function startQuiz(st){
   examDeadline=Date.now()+state.config.durationMinutes*60000;tick();clearInterval(examTimer);examTimer=setInterval(tick,1000)
 }
 function tick(){const sec=Math.max(0,Math.ceil((examDeadline-Date.now())/1000));$("timer").textContent=`${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;$("timer").classList.toggle("warn",sec<=60);if(sec<=0){clearInterval(examTimer);submitQuiz(true)}}
-function submitQuiz(auto){
+async function submitQuiz(auto){
   const st=activeStudentRecord||state.students.find(x=>x.username===state.activeStudent);if(!st||!currentQuiz)return;
   const answers=currentQuiz.map((_,i)=>{const el=document.querySelector(`input[name="q${i}"]:checked`);return el?Number(el.value):null});
   const score=currentQuiz.reduce((n,q,i)=>n+(answers[i]===q.correct?1:0),0);
