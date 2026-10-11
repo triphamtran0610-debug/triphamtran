@@ -264,11 +264,35 @@ function saveStudents(){
   saveState().then(()=>{renderStudents();alert("Đã lưu "+arr.length+" học viên");});
 }
 
+async function deleteStudentResult(username){
+  const r=state.results?.[username];
+  if(!r)return alert("Không tìm thấy kết quả của học viên này.");
+  if(!confirm(`Xóa kết quả thi của ${r.name||username}? Danh sách học viên và câu hỏi sẽ được giữ nguyên.`))return;
+  delete state.results[username];
+  await saveState();
+  renderDash();
+  alert("Đã xóa kết quả của "+(r.name||username)+".");
+}
+async function deleteAllResults(){
+  const count=Object.keys(state.results||{}).length;
+  if(!count)return alert("Hiện chưa có kết quả nào để xóa.");
+  if(!confirm(`Cậu có chắc muốn xóa TOÀN BỘ ${count} kết quả thi? Danh sách học viên, câu hỏi và cấu hình kỳ thi sẽ được giữ nguyên.`))return;
+  if(!confirm("Xác nhận lần cuối: không thể tự khôi phục các kết quả đã xóa nếu chưa sao lưu. Tiếp tục?"))return;
+  state.results={};
+  await saveState();
+  renderDash();
+  alert("Đã xóa toàn bộ kết quả thi.");
+}
 function renderDash(){
-  const total=state.students.length, done=Object.keys(state.results).length, absent=Math.max(0,total-done), vals=Object.values(state.results);
+  state.results=state.results||{};
+  const entries=Object.entries(state.results);
+  const total=state.students.length, done=entries.length, absent=Math.max(0,total-done), vals=entries.map(([username,result])=>({...result,username}));
   const avg=vals.length?vals.reduce((a,x)=>a+(x.score/x.total*100),0)/vals.length:0, passed=vals.filter(x=>x.score/x.total*100>=state.config.passPercent).length;
   $("sTotal").textContent=total;$("sDone").textContent=done;$("sAbsent").textContent=absent;$("sRate").textContent=(total?done/total*100:0).toFixed(0)+"%";$("sPassed").textContent=passed;$("sAvg").textContent=avg.toFixed(1)+"%";
-  $("resultsTable").innerHTML=vals.length?`<table><tr><th>Học viên</th><th>Điểm</th><th>Kết quả</th><th>Thời gian</th></tr>${vals.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}/${x.total}</td><td>${x.score/x.total*100>=state.config.passPercent?"Đạt":"Chưa đạt"}</td><td>${esc(x.submittedAt)}</td></tr>`).join("")}</table>`:"Chưa có kết quả"
+  $("resultsTable").innerHTML=vals.length?`<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="danger" id="deleteAllResultsBtn" type="button">Xóa toàn bộ kết quả</button></div><div style="overflow-x:auto"><table><tr><th>Học viên</th><th>Điểm</th><th>Kết quả</th><th>Thời gian</th><th>Thao tác</th></tr>${vals.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}/${x.total}</td><td>${x.score/x.total*100>=state.config.passPercent?"Đạt":"Chưa đạt"}</td><td>${esc(x.submittedAt)}</td><td><button class="danger delete-one-result" type="button" data-username="${esc(x.username)}">Xóa</button></td></tr>`).join("")}</table></div>`:"Chưa có kết quả";
+  const clearBtn=$("deleteAllResultsBtn");
+  if(clearBtn)clearBtn.onclick=deleteAllResults;
+  document.querySelectorAll(".delete-one-result").forEach(btn=>btn.onclick=()=>deleteStudentResult(btn.dataset.username));
 }
 function renderAdmin(){
   $("examName").value=state.config.examName;$("examCount").value=state.config.questionCount;$("examMinutes").value=state.config.durationMinutes;$("examPass").value=state.config.passPercent;
