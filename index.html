@@ -95,6 +95,22 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 
 <div id="panel-questions" class="card panel hidden">
 <h3>📝 Ngân hàng câu hỏi</h3>
+<div class="card" style="border:1px solid #b8d5f5;background:#f8fbff">
+  <h4 style="margin:0 0 8px">📥 Nhập hàng loạt câu hỏi</h4>
+  <p class="muted">Dán cả đề vào đây. Mỗi câu gồm dòng “Câu 1. ...”, bốn dòng A–D và dòng “Đáp án: B”. Có thể thêm “Giải thích: ...” và “Điều/Khoản: ...”. Các câu cách nhau bằng dòng trống.</p>
+  <textarea id="bulkQuestions" rows="12" placeholder="Câu 1. Nội dung câu hỏi ở đây?&#10;A. Phương án A&#10;B. Phương án B&#10;C. Phương án C&#10;D. Phương án D&#10;Đáp án: B&#10;Giải thích: Nêu lý do đáp án B đúng.&#10;Điều/Khoản: Điều 5"></textarea>
+  <div class="grid">
+    <select id="bulkSource"></select>
+    <input id="bulkTopic" placeholder="Chuyên đề áp dụng cho các câu (không bắt buộc)">
+    <select id="bulkDifficulty"><option>Nhận biết</option><option selected>Thông hiểu</option><option>Vận dụng</option><option>Vận dụng cao</option></select>
+    <select id="bulkStatus"><option value="draft" selected>Nháp (khuyên dùng)</option><option value="approved">Đã duyệt</option></select>
+  </div>
+  <button id="previewBulk" class="secondary" type="button">Kiểm tra nội dung</button>
+  <button id="importBulk" type="button">Lưu tất cả câu hợp lệ</button>
+  <div id="bulkPreview" class="notice" aria-live="polite">Chưa kiểm tra nội dung.</div>
+</div>
+<div class="card">
+  <h4>✏️ Thêm hoặc chỉnh sửa một câu</h4>
 <div class="grid">
 <select id="qSource"></select><input id="qTopic" placeholder="Chuyên đề">
 <select id="qDifficulty"><option>Nhận biết</option><option selected>Thông hiểu</option><option>Vận dụng</option><option>Vận dụng cao</option></select>
@@ -111,6 +127,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 <textarea id="qExplanation" rows="3" placeholder="Giải thích đáp án"></textarea>
 <button id="saveQ">Lưu câu hỏi</button><button id="clearQ" class="secondary">Làm mới</button>
 <div id="questionList"></div>
+</div>
 </div>
 
 <div id="panel-students" class="card panel hidden">
@@ -223,6 +240,7 @@ function showPanel(name){
 function renderSources(){
   $("activeSource").innerHTML=state.sources.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}${s.code?" — "+esc(s.code):""}</option>`).join("");
   $("qSource").innerHTML=$("activeSource").innerHTML;
+  if($("bulkSource"))$("bulkSource").innerHTML=$("activeSource").innerHTML;
   $("activeSource").value=state.config.activeSourceId;$("qSource").value=state.config.activeSourceId;
   $("sourceList").innerHTML=state.sources.map(s=>`<div class="card"><b>${esc(s.name)}</b><div class="muted">${esc(s.code)}</div><button class="danger" onclick="deleteSource('${s.id}')">Xóa</button></div>`).join("")
 }
@@ -236,6 +254,62 @@ function renderQuestions(){
 <div style="margin-top:7px"><button onclick='editQuestion(${JSON.stringify(q)})' class="secondary">Sửa</button>
 <button onclick="setStatus('${q.id}','approved')">Duyệt</button><button onclick="setStatus('${q.id}','draft')" class="secondary">Nháp</button><button onclick="deleteQuestion('${q.id}')" class="danger">Xóa</button></div></div>`).join("")||"Chưa có câu hỏi"
 }
+
+function parseBulkQuestions(){
+  const raw=$("bulkQuestions").value.trim();
+  if(!raw)return {items:[],errors:["Chưa dán nội dung câu hỏi."]};
+  const chunks=raw.split(/(?=^\s*Câu\s*\d+\s*[.:)\-])/im).map(x=>x.trim()).filter(Boolean);
+  const items=[],errors=[];
+  chunks.forEach((chunk,index)=>{
+    const lines=chunk.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    let question="",options=["","","",""],correctText="",explanation="",basis="";
+    let current="question";
+    for(let line of lines){
+      const qhead=line.match(/^Câu\s*\d+\s*[.:)\-]\s*(.*)$/i);
+      if(qhead){question=qhead[1].trim();current="question";continue;}
+      const opt=line.match(/^([ABCD])\s*[.)、:]\s*(.*)$/i);
+      if(opt){options[opt[1].toUpperCase().charCodeAt(0)-65]=opt[2].trim();current="option";continue;}
+      const ans=line.match(/^(?:Đáp án(?: đúng)?|ĐA)\s*[:：]\s*([ABCD])\b/i);
+      if(ans){correctText=ans[1].toUpperCase();current="answer";continue;}
+      const exp=line.match(/^(?:Giải thích|Lời giải|Giải đáp)\s*[:：]\s*(.*)$/i);
+      if(exp){explanation=exp[1].trim();current="explanation";continue;}
+      const bas=line.match(/^(?:Điều\/Khoản|Căn cứ|Căn cứ pháp lý)\s*[:：]\s*(.*)$/i);
+      if(bas){basis=bas[1].trim();current="basis";continue;}
+      if(current==="question")question+=(question?"\n":"")+line;
+      else if(current==="explanation")explanation+=(explanation?"\n":"")+line;
+      else if(current==="basis")basis+=(basis?"\n":"")+line;
+    }
+    const missing=[];
+    if(!question)missing.push("thiếu nội dung câu hỏi");
+    if(options.some(x=>!x))missing.push("thiếu một hoặc nhiều đáp án A–D");
+    if(!correctText)missing.push("thiếu dòng Đáp án: A/B/C/D");
+    if(missing.length)errors.push("Khối "+(index+1)+": "+missing.join(", "));
+    else items.push({question,options,correct:"ABCD".indexOf(correctText),explanation,basis});
+  });
+  return {items,errors};
+}
+function previewBulk(){
+  const result=parseBulkQuestions();
+  $("bulkPreview").innerHTML="<b>Đọc được "+result.items.length+" câu hợp lệ.</b>"+(result.errors.length?"<br><span style='color:#b42318'>"+result.errors.map(esc).join("<br>")+"</span>":"<br>Không phát hiện lỗi định dạng.");
+}
+async function importBulk(){
+  const result=parseBulkQuestions();
+  if(!result.items.length){previewBulk();return alert("Chưa có câu hỏi hợp lệ để lưu. Hãy kiểm tra mẫu nhập.");}
+  if(result.errors.length){previewBulk();return alert("Có khối câu hỏi chưa đúng định dạng. Hãy sửa các lỗi hiển thị rồi nhập lại để tránh bỏ sót câu.");}
+  const sourceId=$("bulkSource").value||$("qSource").value||state.config.activeSourceId;
+  if(!sourceId)return alert("Hãy tạo/chọn bộ luật hoặc nguồn trước.");
+  if(!confirm("Lưu "+result.items.length+" câu hỏi vào ngân hàng câu hỏi? Các câu sẽ được thêm mới, không ghi đè câu hỏi hiện có."))return;
+  const topic=$("bulkTopic").value.trim(),difficulty=$("bulkDifficulty").value,status=$("bulkStatus").value;
+  const createdAt=Date.now();
+  result.items.forEach((x,i)=>state.questions.push({id:"q-bulk-"+createdAt+"-"+i,sourceId,topic,difficulty,status,basis:x.basis,sourcePage:"",question:x.question,options:x.options,correct:x.correct,explanation:x.explanation}));
+  await saveState();
+  $("qSource").value=sourceId;
+  $("bulkQuestions").value="";
+  $("bulkPreview").textContent="Đã lưu "+result.items.length+" câu hỏi. Cậu có thể bấm Sửa ở từng câu trong danh sách bên dưới.";
+  renderQuestions();
+  alert("Đã thêm "+result.items.length+" câu hỏi vào ngân hàng.");
+}
+
 function clearQ(){["qId","qText","qTopic","qBasis","qPage","qa","qb","qc","qd","qExplanation"].forEach(x=>$(x).value="");$("qCorrect").value="0";$("qStatus").value="draft"}
 function editQuestion(q){$("qId").value=q.id;$("qSource").value=q.sourceId;$("qTopic").value=q.topic||"";$("qDifficulty").value=q.difficulty||"Thông hiểu";$("qStatus").value=q.status||"draft";$("qBasis").value=q.basis||"";$("qPage").value=q.sourcePage||"";$("qText").value=q.question;$("qa").value=q.options[0];$("qb").value=q.options[1];$("qc").value=q.options[2];$("qd").value=q.options[3];$("qCorrect").value=q.correct;$("qExplanation").value=q.explanation||"";window.scrollTo({top:0,behavior:"smooth"})}
 function saveQuestion(){
@@ -364,6 +438,7 @@ $("stuLoginBtn").onclick=studentLogin;$("submitBtn").onclick=()=>submitQuiz(fals
 $("saveExam").onclick=saveExam;$("addSource").onclick=addSource;$("saveQ").onclick=saveQuestion;$("clearQ").onclick=clearQ;$("saveStudents").onclick=saveStudents;$("exportData").onclick=exportData;$("clearAll").onclick=clearAll;$("importData").onchange=e=>e.target.files[0]&&importData(e.target.files[0]);
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showPanel(b.dataset.tab));
 $("activeSource").onchange=renderQuestions;$("qSource").onchange=renderQuestions;
+$("previewBulk").onclick=previewBulk;$("importBulk").onclick=importBulk;
 
 // QR exam-only mode: when URL contains ?thi=1, hide admin access and focus on student login.
 function applyExamOnlyMode(){
