@@ -408,7 +408,7 @@ async function saveAnswersNow(){
 }
 function scheduleAnswerSave(){
   clearTimeout(answerSaveTimer);
-  answerSaveTimer=setTimeout(saveAnswersNow,250);
+  saveAnswersNow();
 }
 async function startQuiz(st,p){
   const pool=state.questions.filter(q=>q.sourceId===state.config.activeSourceId&&q.status==="approved");
