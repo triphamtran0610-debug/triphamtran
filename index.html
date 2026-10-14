@@ -192,16 +192,19 @@ function saveState(){
   return Promise.resolve();
 }
 async function initSupabase(){
+  refreshExamInfo();
   try{
-    const {data,error}=await supabaseClient.rpc("v10_public_get_state");
+    const request=supabaseClient.rpc("v10_public_get_state");
+    const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Hết thời gian chờ kết nối Supabase")),10000));
+    const {data,error}=await Promise.race([request,timeout]);
     if(error) throw error;
     if(data){
       state.config=data.config||state.config;
       state.sources=data.sources||state.sources;
       state.questions=(data.questions||state.questions).map(q=>({...q,sourceId:q.sourceId||state.config.activeSourceId||state.sources[0]?.id}));
-      refreshExamInfo();
     }
   }catch(error){console.error("Không tải được dữ liệu Supabase:",error);}
+  finally{refreshExamInfo();}
 }
 function $(id){return document.getElementById(id)}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
@@ -258,31 +261,31 @@ function renderQuestions(){
 function parseBulkQuestions(){
   const raw=$("bulkQuestions").value.trim();
   if(!raw)return {items:[],errors:["Chưa dán nội dung câu hỏi."]};
-  const chunks=raw.split(/(?=^\\s*Câu\\s*\\d+\\s*[.:)\\-])/im).map(x=>x.trim()).filter(Boolean);
+  const chunks=raw.split(/(?=^\s*Câu\s*\d+\s*[.:)\-])/im).map(x=>x.trim()).filter(Boolean);
   const items=[],errors=[];
   chunks.forEach((chunk,index)=>{
-    const lines=chunk.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean);
+    const lines=chunk.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
     let question="",options=["","","",""],correctText="",explanation="",basis="";
     let current="question";
     for(let line of lines){
-      const qhead=line.match(/^Câu\\s*\\d+\\s*[.:)\\-]\\s*(.*)$/i);
+      const qhead=line.match(/^Câu\s*\d+\s*[.:)\-]\s*(.*)$/i);
       if(qhead){question=qhead[1].trim();current="question";continue;}
-      const opt=line.match(/^([ABCD])\\s*[.)、:]\\s*(.*)$/i);
+      const opt=line.match(/^([ABCD])\s*[.)、:]\s*(.*)$/i);
       if(opt){
         const oi=opt[1].toUpperCase().charCodeAt(0)-65;
         options[oi]=opt[2].trim();
         current="option";
         continue;
       }
-      const ans=line.match(/^(?:Đáp\\s*án(?:\\s*đúng)?|ĐA|Đáp\\s*án\\s*chính\\s*xác)\\s*[:：.\\-]?\\s*([ABCD])(?:\\s|[).,:;]|$)/i);
+      const ans=line.match(/^(?:Đáp\s*án(?:\s*đúng)?|ĐA|Đáp\s*án\s*chính\s*xác)\s*[:：.\-]?\s*([ABCD])(?:\s|[).,:;]|$)/i);
       if(ans){correctText=ans[1].toUpperCase();current="answer";continue;}
-      const exp=line.match(/^(?:Giải\\s*thích|Lời\\s*giải|Giải\\s*đáp)\\s*[:：]\\s*(.*)$/i);
+      const exp=line.match(/^(?:Giải\s*thích|Lời\s*giải|Giải\s*đáp)\s*[:：]\s*(.*)$/i);
       if(exp){explanation=exp[1].trim();current="explanation";continue;}
-      const bas=line.match(/^(?:Điều\\/Khoản|Căn cứ(?:\\s*pháp lý)?)\\s*[:：]\\s*(.*)$/i);
+      const bas=line.match(/^(?:Điều\/Khoản|Căn cứ(?:\s*pháp lý)?)\s*[:：]\s*(.*)$/i);
       if(bas){basis=bas[1].trim();current="basis";continue;}
-      if(current==="question")question+=(question?"\\n":"")+line;
-      else if(current==="explanation")explanation+=(explanation?"\\n":"")+line;
-      else if(current==="basis")basis+=(basis?"\\n":"")+line;
+      if(current==="question")question+=(question?"\n":"")+line;
+      else if(current==="explanation")explanation+=(explanation?"\n":"")+line;
+      else if(current==="basis")basis+=(basis?"\n":"")+line;
     }
     const missing=[];
     if(!question)missing.push("thiếu nội dung câu hỏi");
