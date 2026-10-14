@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>V10 - Hệ thống trắc nghiệm Lý luận chính trị</title>
+<title>Pháp Luật Số | Hệ thống ôn luyện & sát hạch</title>
+<meta name="theme-color" content="#10233f">
+<meta name="description" content="Nền tảng ôn luyện, kiểm tra và quản lý kỳ thi pháp luật trực tuyến.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2310233f'/%3E%3Cpath d='M50 15 20 28v22c0 20 13 31 30 38 17-7 30-18 30-38V28Z' fill='%23d7b56d'/%3E%3Cpath d='M50 29v43M34 40h32M37 40l-9 18h18Zm26 0-9 18h18Z' stroke='%2310233f' stroke-width='4' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Segoe UI,sans-serif;background:#f3f6fa;color:#182338}
 .wrap{max-width:1120px;margin:auto;padding:18px}.card{background:#fff;border-radius:16px;padding:20px;margin:15px 0;box-shadow:0 8px 30px #143b610f}
@@ -21,13 +24,81 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 .modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;z-index:99}.modal-box{width:min(460px,95vw);background:#fff;border-radius:16px;padding:22px}
 .notice{padding:12px;border-radius:10px;background:#eef7ff;margin:8px 0}
 @media(max-width:760px){.grid,.stats{grid-template-columns:1fr}}
+
+/* Pháp Luật Số — professional visual refresh */
+:root{color-scheme:light;--navy:#10233f;--navy-2:#173b63;--gold:#d7b56d;--ink:#18283e;--muted:#63748a;--line:#dce5ef;--surface:#fff;--canvas:#f2f6fb;--blue:#235da8}
+html{scroll-behavior:smooth}
+body{font-family:Inter,"Segoe UI",Arial,sans-serif;background:radial-gradient(ellipse at top left,#e2edf9 0,transparent 38%),var(--canvas);color:var(--ink);line-height:1.55}
+.wrap{max-width:1240px;padding:26px 22px 40px}
+.card{border:1px solid rgba(205,218,233,.75);border-radius:18px;padding:24px;margin:16px 0;box-shadow:0 10px 32px rgba(16,35,63,.055)}
+.brand-header{position:relative;overflow:hidden;background:linear-gradient(118deg,#10233f 0%,#173b63 72%,#23517c 100%);color:#fff;border:0;box-shadow:0 18px 42px rgba(16,35,63,.18);padding:28px 30px}
+.brand-header:after{content:"";position:absolute;width:270px;height:270px;border:1px solid rgba(215,181,109,.28);border-radius:50%;right:-70px;top:-135px;box-shadow:0 0 0 28px rgba(215,181,109,.035),0 0 0 58px rgba(215,181,109,.025);pointer-events:none}
+.brand-lockup{display:flex;align-items:center;gap:17px;min-width:0;position:relative;z-index:1}
+.brand-mark{width:62px;height:62px;flex:0 0 62px;display:grid;place-items:center;border-radius:17px;background:linear-gradient(145deg,#f0d99d,#c69b4b);color:#10233f;font-size:32px;box-shadow:inset 0 1px rgba(255,255,255,.6),0 8px 20px #08182a55}
+.eyebrow{font-size:10px;letter-spacing:2.1px;font-weight:800;color:#e8cc8a;margin-bottom:5px}
+.brand-header h1{font-size:clamp(23px,3vw,34px);letter-spacing:1.5px;line-height:1.15;margin:0 0 6px;font-weight:850}
+.brand-subtitle{color:#e3eaf4;font-size:14px;margin-bottom:9px}
+.brand-header #examInfo{color:#b9cbe0;font-size:13px}
+.admin-access{position:relative;z-index:2;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;white-space:nowrap}
+.admin-access:hover{background:rgba(255,255,255,.18)}
+h2{font-size:22px;letter-spacing:-.35px;color:#172d49}
+h3{font-size:18px;color:#1c3554}
+h4{color:#203c60}
+input,textarea,select{border-color:#cbd7e5;background:#fff;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#5285c2;box-shadow:0 0 0 3px rgba(35,93,168,.12)}
+button{background:linear-gradient(135deg,#245fa8,#17477f);box-shadow:0 3px 8px rgba(23,71,127,.12);transition:transform .12s,box-shadow .12s,filter .12s}
+button:hover{filter:brightness(1.06);box-shadow:0 5px 12px rgba(23,71,127,.18);transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:focus-visible{outline:3px solid #e3bf6d;outline-offset:2px}
+.secondary{background:#edf2f8;color:#213b5b;box-shadow:none;border:1px solid #dbe4ef}
+.danger{background:linear-gradient(135deg,#c33b32,#982820)}
+.success{background:linear-gradient(135deg,#21875c,#126b45)}
+#loginStudent{border-top:4px solid var(--gold)}
+.notice{border:1px solid #d6e5f5;background:#f1f7ff;color:#284766}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.stat{border:1px solid #e1e9f2;background:linear-gradient(145deg,#fbfdff,#f2f6fb);padding:17px}
+.stat b{color:#173b63;font-size:27px}
+.tabs{position:sticky;top:8px;z-index:10;padding:8px;background:rgba(242,246,251,.93);backdrop-filter:blur(12px);border:1px solid #dce5ef;border-radius:14px}
+.tabs button{margin:2px}
+.q{background:#fff;border-color:#dce5ef;box-shadow:0 3px 12px rgba(16,35,63,.025)}
+.option{cursor:pointer;transition:border-color .12s,background .12s}
+.option:hover{border-color:#7ea4d1;background:#f7faff}
+.timer{font-variant-numeric:tabular-nums;background:#fff3d4;color:#72510e;border:1px solid #f0d58c}
+.timer.warn{background:#fff0ee;color:#a22419;border-color:#f0b7b1}
+table{background:#fff;border-radius:10px;overflow:hidden}
+th{background:#f0f5fa;color:#294461;font-weight:750}
+th,td{padding:11px 10px}
+.modal-box{box-shadow:0 24px 70px rgba(0,0,0,.25);border:1px solid #e0e7ef}
+@media(max-width:760px){
+ .wrap{padding:12px 12px 28px}
+ .card{padding:17px;border-radius:15px}
+ .brand-header{align-items:flex-start;padding:21px 18px;flex-direction:column}
+ .brand-lockup{align-items:flex-start;gap:12px}
+ .brand-mark{width:48px;height:48px;flex-basis:48px;border-radius:13px;font-size:25px}
+ .eyebrow{font-size:9px;letter-spacing:1.25px}
+ .brand-subtitle{font-size:13px}
+ .admin-access{align-self:flex-start}
+ .tabs{position:static}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .top{align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
 <div class="wrap">
-<header class="card top">
-<div><h1>📚 Trắc nghiệm Lý luận chính trị</h1><div id="examInfo" class="muted">Đang tải...</div></div>
-<button class="secondary" id="adminBtn">🔐 Quản trị</button>
+<header class="card top brand-header">
+<div class="brand-lockup">
+  <div class="brand-mark" aria-hidden="true">⚖</div>
+  <div>
+    <div class="eyebrow">NỀN TẢNG ĐÀO TẠO & SÁT HẠCH TRỰC TUYẾN</div>
+    <h1>PHÁP LUẬT SỐ</h1>
+    <div class="brand-subtitle">Hệ thống ôn luyện và kiểm tra kiến thức pháp luật</div>
+    <div id="examInfo" class="muted">Đang tải thông tin kỳ thi...</div>
+  </div>
+</div>
+<button class="secondary admin-access" id="adminBtn"><span aria-hidden="true">🔐</span> Cổng quản trị</button>
 </header>
 
 <section id="loginStudent" class="card">
