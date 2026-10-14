@@ -389,19 +389,42 @@ async function studentLogin(){
   if(data.has_result){$("stuMsg").textContent="Tài khoản này đã hoàn thành bài.";return;}
   state.config=data.config||state.config;state.sources=data.sources||state.sources;
   state.questions=(data.questions||[]).map(q=>({...q,sourceId:q.sourceId||state.config.activeSourceId||state.sources[0]?.id}));
-  state.results=state.results||{};delete state.results[u];
+  state.results=state.results||{};
   activeStudentRecord=data.student;activeStudentPassword=p;state.activeStudent=u;
-  $("stuMsg").textContent="";refreshExamInfo();startQuiz(activeStudentRecord);
+  $("stuMsg").textContent="";refreshExamInfo();await startQuiz(activeStudentRecord,p);
 }
 
-function startQuiz(st){
+let answerSaveTimer=null, savingAnswers=false;
+function collectAnswers(){
+  const out={};
+  (currentQuiz||[]).forEach((q,i)=>{const el=document.querySelector(`input[name="q${i}"]:checked`);if(el)out[String(i)]=Number(el.value)});
+  return out;
+}
+async function saveAnswersNow(){
+  if(!activeStudentRecord||!activeStudentPassword||!currentQuiz)return;
+  const {data,error}=await supabaseClient.rpc("v10_student_attempt_save",{p_username:activeStudentRecord.username,p_password:activeStudentPassword,p_answers:collectAnswers()});
+  if(error)console.error("Không lưu được bài đang làm:",error);
+  if(data?.expired){clearInterval(examTimer);await submitQuiz(true);}
+}
+function scheduleAnswerSave(){
+  clearTimeout(answerSaveTimer);
+  answerSaveTimer=setTimeout(saveAnswersNow,250);
+}
+async function startQuiz(st,p){
   const pool=state.questions.filter(q=>q.sourceId===state.config.activeSourceId&&q.status==="approved");
   const n=Math.min(state.config.questionCount,pool.length);
   if(pool.length<n||!n){alert("Bộ luật hiện tại chưa đủ câu đã duyệt.");return}
-  currentQuiz=shuffle(pool).slice(0,n).map(q=>{const o=shuffle(q.options.map((text,index)=>({text,index})));return{id:q.id,question:q.question,options:o.map(x=>x.text),correct:o.findIndex(x=>x.index===q.correct),basis:q.basis,explanation:q.explanation}});
+  const candidate=shuffle(pool).slice(0,n).map(q=>{const o=shuffle(q.options.map((text,index)=>({text,index})));return{id:q.id,question:q.question,options:o.map(x=>x.text),correct:o.findIndex(x=>x.index===q.correct),basis:q.basis,explanation:q.explanation}});
+  const {data:attempt,error}=await supabaseClient.rpc("v10_student_attempt_start",{p_username:st.username,p_password:p,p_quiz:candidate});
+  if(error||!attempt?.quiz){$("stuMsg").textContent=error?.message?.includes("already_submitted")?"Tài khoản này đã hoàn thành bài.":"Không thể mở lượt thi: "+(error?.message||"lỗi dữ liệu");return}
+  currentQuiz=attempt.quiz;
+  examDeadline=new Date(attempt.deadline_at).getTime();
   $("loginStudent").classList.add("hidden");$("quiz").classList.remove("hidden");$("quizTitle").textContent=state.config.examName;$("quizMeta").textContent=`${currentQuiz.length} câu • ${st.name}`;$("identity").innerHTML=`🔒 <b>${esc(st.name)}</b> • Tài khoản <b>${esc(st.username)}</b> • Một lượt thi duy nhất`;
   $("quizQuestions").innerHTML=currentQuiz.map((q,i)=>`<div class="q"><b>Câu ${i+1}. ${esc(q.question)}</b>${q.options.map((o,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${esc(o)}</label>`).join("")}</div>`).join("");
-  examDeadline=Date.now()+state.config.durationMinutes*60000;tick();clearInterval(examTimer);examTimer=setInterval(tick,1000)
+  Object.entries(attempt.answers||{}).forEach(([i,v])=>{const el=document.querySelector(`input[name="q${i}"][value="${v}"]`);if(el)el.checked=true});
+  $("quizQuestions").querySelectorAll('input[type="radio"]').forEach(el=>el.addEventListener("change",scheduleAnswerSave));
+  tick();clearInterval(examTimer);examTimer=setInterval(tick,1000);
+  if(attempt.expired||Date.now()>=examDeadline){clearInterval(examTimer);await submitQuiz(true);}
 }
 function tick(){const sec=Math.max(0,Math.ceil((examDeadline-Date.now())/1000));$("timer").textContent=`${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;$("timer").classList.toggle("warn",sec<=60);if(sec<=0){clearInterval(examTimer);submitQuiz(true)}}
 async function submitQuiz(auto){
