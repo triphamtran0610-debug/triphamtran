@@ -84,6 +84,33 @@ th,td{padding:11px 10px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
 
+
+/* lively but restrained micro-interactions */
+@keyframes brandRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes brandGlow{0%,100%{box-shadow:0 0 0 0 rgba(215,181,109,0)}50%{box-shadow:0 0 0 8px rgba(215,181,109,.09)}}
+@keyframes floatMark{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(-2deg)}}
+@keyframes shimmerLine{0%{background-position:150% 0}100%{background-position:-150% 0}}
+@keyframes softPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.brand-header{isolation:isolate}
+.brand-header:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.26;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.13) 45%,transparent 70%);background-size:220% 100%;animation:shimmerLine 12s linear infinite}
+.brand-lockup{animation:brandRise .65s ease-out both}
+.brand-mark{animation:floatMark 5s ease-in-out infinite}
+.admin-access{animation:brandRise .7s .08s ease-out both}
+.card{animation:brandRise .45s ease-out both;transition:box-shadow .22s,border-color .22s,transform .22s}
+#loginStudent:hover{border-color:#d7b56d;box-shadow:0 14px 36px rgba(16,35,63,.09)}
+.stat{transition:transform .2s,box-shadow .2s,border-color .2s}
+.stat:hover{transform:translateY(-3px);border-color:#c2d5ea;box-shadow:0 10px 22px rgba(16,35,63,.08)}
+.tabs button{transition:background .16s,transform .16s,box-shadow .16s}
+.q{transition:border-color .18s,box-shadow .18s}
+.q:focus-within{border-color:#9bbce0;box-shadow:0 0 0 3px rgba(35,93,168,.06)}
+.option:has(input:checked){border-color:#4f85c2;background:#edf5ff}
+button:disabled{opacity:.58;cursor:not-allowed;transform:none;box-shadow:none}
+input,textarea,select{transition:border-color .16s,box-shadow .16s,background .16s}
+@media(prefers-reduced-motion:reduce){
+ .brand-header:before,.brand-lockup,.brand-mark,.admin-access,.card{animation:none!important}
+ .card,.stat,.tabs button,button,input,textarea,select{transition:none!important}
+}
+
 </style>
 </head>
 <body>
