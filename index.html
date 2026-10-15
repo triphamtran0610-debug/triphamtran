@@ -111,6 +111,21 @@ input,textarea,select{transition:border-color .16s,box-shadow .16s,background .1
  .card,.stat,.tabs button,button,input,textarea,select{transition:none!important}
 }
 
+/* Visible motion pass: entrance, logo glow, and hover feedback */
+@keyframes plsPageEnter{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes plsLogoGlow{0%,100%{box-shadow:0 0 0 0 rgba(215,181,109,.12),0 8px 20px #08182a55}50%{box-shadow:0 0 0 9px rgba(215,181,109,.14),0 10px 26px #08182a44}}
+@keyframes plsHeaderSweep{0%{transform:translateX(-120%) skewX(-18deg);opacity:0}15%{opacity:.45}55%{opacity:.2}100%{transform:translateX(160%) skewX(-18deg);opacity:0}}
+.brand-header:before{width:45%;left:-55%;right:auto;inset-block:0;z-index:0;opacity:1;background:linear-gradient(90deg,transparent,rgba(255,255,255,.19),transparent);background-size:100% 100%;animation:plsHeaderSweep 7s ease-in-out infinite}
+.brand-mark{animation:floatMark 3.8s ease-in-out infinite,plsLogoGlow 4.8s ease-in-out infinite}
+#loginStudent,.panel,.brand-header{animation:plsPageEnter .75s cubic-bezier(.2,.7,.2,1) both}
+#loginStudent{animation-delay:.12s}
+#panel-dash{animation-delay:.08s}
+.stat{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.stat:hover{transform:translateY(-5px) scale(1.012);box-shadow:0 14px 28px rgba(16,35,63,.12)}
+button{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+button:hover{transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){.brand-header:before,.brand-mark,#loginStudent,.panel,.brand-header{animation:none!important}}
+
 </style>
 </head>
 <body>
