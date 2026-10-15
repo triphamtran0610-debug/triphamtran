@@ -707,16 +707,26 @@ document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showPanel(b.d
 $("activeSource").onchange=renderQuestions;$("qSource").onchange=renderQuestions;
 $("previewBulk").onclick=previewBulk;$("importBulk").onclick=importBulk;
 
-// QR exam-only mode: when URL contains ?thi=1, hide admin access and focus on student login.
+// Cổng học viên và cổng quản trị dùng chung website, không tạo đường dẫn tệp rời.
 function applyExamOnlyMode(){
-  const examOnly = new URLSearchParams(location.search).get("thi") === "1";
-  if(!examOnly) return;
+  const params = new URLSearchParams(location.search);
+  const examOnly = params.get("thi") === "1";
+  const adminOnly = params.get("quantri") === "1";
   const adminBtn = document.getElementById("adminBtn");
-  if(adminBtn) adminBtn.style.display = "none";
-  const login = document.getElementById("loginStudent");
-  if(login) login.scrollIntoView({behavior:"instant", block:"start"});
-  const user = document.getElementById("stuUser");
-  if(user) setTimeout(()=>user.focus(),150);
+  const studentLogin = document.getElementById("loginStudent");
+  if(examOnly){
+    if(adminBtn) adminBtn.style.display = "none";
+    if(studentLogin) studentLogin.scrollIntoView({behavior:"instant", block:"start"});
+    const user = document.getElementById("stuUser");
+    if(user) setTimeout(()=>user.focus(),150);
+  }
+  if(adminOnly){
+    if(adminBtn) adminBtn.style.display = "none";
+    if(studentLogin) studentLogin.style.display = "none";
+    openModal();
+    const user = document.getElementById("adminUser");
+    if(user) setTimeout(()=>user.focus(),150);
+  }
 }
 
 initSupabase();
