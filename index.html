@@ -126,6 +126,24 @@ button{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
 button:hover{transform:translateY(-2px)}
 @media(prefers-reduced-motion:reduce){.brand-header:before,.brand-mark,#loginStudent,.panel,.brand-header{animation:none!important}}
 
+/* Stronger, clearly visible animation for the public landing page */
+@keyframes plsLogoBreath{0%,100%{transform:translateY(0) scale(1);filter:brightness(1)}50%{transform:translateY(-5px) scale(1.045);filter:brightness(1.12)}}
+@keyframes plsHalo{0%,100%{box-shadow:0 0 0 0 rgba(231,202,133,0),0 8px 20px #08182a55}50%{box-shadow:0 0 0 10px rgba(231,202,133,.20),0 12px 28px rgba(8,24,42,.35)}}
+@keyframes plsTextIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes plsRing{0%{transform:scale(.86);opacity:.15}50%{opacity:.42}100%{transform:scale(1.13);opacity:0}}
+.brand-header{animation:plsTextIn .9s ease-out both!important}
+.brand-lockup>*{animation:plsTextIn .85s ease-out both}
+.brand-lockup>*:nth-child(2){animation-delay:.12s}
+.brand-mark{animation:plsLogoBreath 3s ease-in-out infinite,plsHalo 3s ease-in-out infinite!important;position:relative;z-index:2}
+.brand-header:after{animation:plsRing 4s ease-out infinite;transform-origin:center}
+#loginStudent{animation:plsTextIn .9s .18s ease-out both!important}
+#loginStudent .notice{transition:background .25s,border-color .25s}
+#loginStudent .notice:hover{background:#e8f2ff;border-color:#a9c9ed}
+button{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease!important}
+button:hover{transform:translateY(-3px)!important;filter:brightness(1.06);box-shadow:0 8px 18px rgba(16,35,63,.18)}
+button:active{transform:translateY(0) scale(.98)!important}
+@media(prefers-reduced-motion:reduce){.brand-header,.brand-lockup>*,.brand-mark,#loginStudent,.brand-header:after{animation:none!important}}
+
 </style>
 </head>
 <body>
