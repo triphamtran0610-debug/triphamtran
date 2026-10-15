@@ -144,6 +144,46 @@ button:hover{transform:translateY(-3px)!important;filter:brightness(1.06);box-sh
 button:active{transform:translateY(0) scale(.98)!important}
 @media(prefers-reduced-motion:reduce){.brand-header,.brand-lockup>*,.brand-mark,#loginStudent,.brand-header:after{animation:none!important}}
 
+/* PHÁP LUẬT SỐ — complete dark mode across login, admin, and exam */
+:root{color-scheme:dark;--navy:#05070b;--navy-2:#0d1119;--gold:#d8b66d;--ink:#edf1f7;--muted:#a0adbd;--line:#2b3544;--surface:#111722;--canvas:#080b11;--blue:#477fc4}
+html,body{background:#080b11!important;color:#edf1f7!important}
+body{background:radial-gradient(ellipse at 15% 0%,#18283b 0,transparent 38%),linear-gradient(145deg,#080b11,#0c111a 65%,#080b11)!important;color:#edf1f7!important}
+.wrap{color:#edf1f7}
+.card,.q,.modal-box,table{background:#111722!important;color:#edf1f7!important;border-color:#2a3545!important;box-shadow:0 12px 32px rgba(0,0,0,.24)!important}
+.brand-header{background:linear-gradient(120deg,#03060b 0%,#101c2c 62%,#183657 100%)!important;border:1px solid #2a3b50!important;box-shadow:0 18px 50px #0008!important}
+h1,h2,h3,h4,.brand-header h1{color:#f3f6fb!important}
+.muted,.brand-subtitle,.brand-header #examInfo{color:#aab8c9!important}
+.eyebrow{color:#e8c979!important}
+input,textarea,select{background:#0b1018!important;color:#f1f5fb!important;border-color:#344154!important}
+input::placeholder,textarea::placeholder{color:#8492a5!important}
+input:focus,textarea:focus,select:focus{border-color:#c4a45d!important;box-shadow:0 0 0 3px #c4a45d26!important}
+button{background:linear-gradient(135deg,#c9a95e,#9e7b35)!important;color:#10141b!important;border:1px solid #e0c57f!important;box-shadow:0 4px 14px #0005!important}
+button:hover{filter:brightness(1.12)!important;box-shadow:0 8px 24px #0008!important}
+button.secondary,.secondary{background:#202a38!important;color:#e8eef7!important;border-color:#3a485d!important}
+button.danger,.danger{background:linear-gradient(135deg,#a93636,#772626)!important;color:#fff!important;border-color:#c65b5b!important}
+button.success,.success{background:linear-gradient(135deg,#237c58,#15563e)!important;color:#fff!important;border-color:#3a9d72!important}
+.notice{background:#142438!important;color:#d7e8fb!important;border-color:#2b4c70!important}
+.stat{background:linear-gradient(145deg,#151e2b,#101620)!important;border-color:#2c394b!important;color:#eaf0f8!important}
+.stat b{color:#e8c979!important}
+.tabs{background:#0b111bdf!important;border-color:#2b3544!important}
+.option{background:#141c28!important;color:#e8eef7!important;border-color:#303c4d!important}
+.option:hover{background:#1b2a3c!important;border-color:#668bb8!important}
+.option:has(input:checked){background:#1b2d43!important;border-color:#c5a65f!important}
+.timer{background:#3a3019!important;color:#ffe5a0!important;border-color:#806b38!important}
+.timer.warn{background:#421f22!important;color:#ffc0b9!important;border-color:#8c4141!important}
+.review{background:#151d28!important;border-color:#3a4657!important;color:#e8eef7!important}
+.correct{background:#123126!important;border-color:#287a53!important}
+.wrong{background:#391f23!important;border-color:#8c4141!important}
+th{background:#1a2635!important;color:#e7c979!important}
+td,th{border-bottom-color:#2c3747!important}
+.badge{background:#263242!important;color:#dbe5f2!important}
+.draft{background:#41341c!important;color:#ffe2a0!important}
+.approved{background:#153728!important;color:#b4f0ce!important}
+.modal{background:#000b!important}
+.admin-access{background:#202a38!important;color:#f1f5fb!important;border-color:#46566c!important}
+.brand-mark{color:#0b1018!important}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
